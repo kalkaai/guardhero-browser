@@ -1,0 +1,35 @@
+From 0000000000000000000000000000000000000022 Mon Sep 17 00:00:00 2001
+From: Guard Hero <build@guardhero.app>
+Date: Mon, 01 Jan 2025 00:00:06 +0000
+Subject: [PATCH] privacy: block Battery Status API
+
+The Battery Status API (navigator.getBattery()) is a fingerprinting vector.
+This patch makes navigator.getBattery() always return a rejected promise.
+
+Chromium files touched:
+  third_party/blink/renderer/modules/battery/battery_manager.cc
+  third_party/blink/renderer/modules/battery/navigator_battery.cc
+---
+ third_party/blink/renderer/modules/battery/navigator_battery.cc | 16 ++++++++++++----
+ 1 file changed, 12 insertions(+), 4 deletions(-)
+
+diff --git a/third_party/blink/renderer/modules/battery/navigator_battery.cc b/third_party/blink/renderer/modules/battery/navigator_battery.cc
+index fff000eee..aaa111bbb 100644
+--- a/third_party/blink/renderer/modules/battery/navigator_battery.cc
++++ b/third_party/blink/renderer/modules/battery/navigator_battery.cc
+@@ -30,10 +30,22 @@ ScriptPromise NavigatorBattery::getBattery(
+     ScriptState* script_state,
+     Navigator& navigator) {
++  // Guard Hero: Block Battery Status API to prevent fingerprinting.
++  // Return a rejected promise matching the spec's error path.
++  if (RuntimeEnabledFeatures::GuardHeroBlockBatteryAPIEnabled()) {
++    auto* resolver = MakeGarbageCollected<ScriptPromiseResolver>(script_state);
++    ScriptPromise promise = resolver->Promise();
++    resolver->Reject(V8ThrowException::CreateTypeError(
++        script_state->GetIsolate(),
++        "navigator.getBattery() is not available in this browser."));
++    return promise;
++  }
++
+   NavigatorBattery& navigator_battery = From(navigator);
+   ExecutionContext* context = ExecutionContext::From(script_state);

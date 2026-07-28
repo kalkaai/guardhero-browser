@@ -1,0 +1,77 @@
+From 0000000000000000000000000000000000000014 Mon Sep 17 00:00:00 2001
+From: Guard Hero <build@guardhero.app>
+Date: Mon, 01 Jan 2025 00:00:11 +0000
+Subject: [PATCH] eagleeye: wire URLRequestRedirectJob for tracking param stripping
+
+Completes the MODIFY path in EagleEyeInterceptor. When the EagleEye
+URL analyzer strips tracking parameters (utm_*, fbclid, gclid, etc.)
+from an allowed request, we previously fell through to ALLOW and lost
+the cleaned URL. This patch:
+
+  1. Passes url.spec() (full URL) instead of url.host() in RequestContext
+     so that the UrlAnalyzer has the query string to work with.
+
+  2. Returns a URLRequestRedirectJob (307 Temporary Redirect) pointing at
+     the cleaned URL instead of nullptr.
+
+  3. Adds three safety checks before issuing the redirect:
+       - cleaned URL is well-formed (GURL::is_valid())
+       - host must match the original (prevent open redirect)
+       - scheme must match the original
+
+  4. Documents the redirect mechanism in detail (same-origin 307, internal
+     redirect, CORS behavior, POST-method preservation vs. 301).
+
+Why 307 and not a URL mutation:
+  URLRequestInterceptor has no direct API to rewrite the URL in-place.
+  The standard approach (used by Brave, uBlock via extension WebRequest API)
+  is to issue an internal redirect. The 307 redirect is processed entirely
+  within the browser process — the renderer sees a single response at the
+  cleaned URL and is never aware of the dirty URL.
+
+Performance:
+  The redirect adds ~0 network latency (it is synthetic, not a real HTTP
+  response). The only overhead is one extra call to MaybeInterceptRequest()
+  on the redirected URL, which is a fast ALLOW (no tracking params).
+
+Chromium files touched:
+  chrome/browser/guardhero/eagleeye_interceptor.cc
+---
+ chrome/browser/guardhero/eagleeye_interceptor.cc | 65 ++++++++++++++++++++---
+ 1 file changed, 58 insertions(+), 7 deletions(-)
+
+diff --git a/chrome/browser/guardhero/eagleeye_interceptor.cc b/chrome/browser/guardhero/eagleeye_interceptor.cc
+index aabbcc11..ddeeef22 100644
+--- a/chrome/browser/guardhero/eagleeye_interceptor.cc
++++ b/chrome/browser/guardhero/eagleeye_interceptor.cc
+@@ -27,6 +27,7 @@
++#include "net/url_request/url_request_redirect_job.h"
+
+@@ -120,10 +121,25 @@ net::URLRequestJob* EagleEyeInterceptor::MaybeInterceptRequest(
+-  // Pass GURL::host() as context.url (fast path, hostname only).
+-  context.url = url.host();
++  // Pass url.spec() (full URL) so the UrlAnalyzer can find and strip
++  // query parameters. ExtractHost() parses the hostname from the spec.
++  context.url = url.spec();
+
+@@ -145,13 +161,52 @@ net::URLRequestJob* EagleEyeInterceptor::MaybeInterceptRequest(
+     case eagleeye::Decision::MODIFY: {
+-      // TODO(v1.0): return URLRequestRedirectJob
+-      return nullptr;
++      const GURL clean_url(result.modified_url);
++
++      // Validate before redirecting — defense against UrlAnalyzer bugs.
++      if (!clean_url.is_valid()) {
++        LOG(WARNING) << "Guard Hero EagleEye: MODIFY produced invalid URL";
++        return nullptr;
++      }
++      if (clean_url.host() != url.host() || clean_url.scheme() != url.scheme()) {
++        LOG(WARNING) << "Guard Hero EagleEye: MODIFY changed host/scheme — refusing";
++        return nullptr;
++      }
++
++      return new net::URLRequestRedirectJob(
++          request, network_delegate, clean_url,
++          net::URLRequestRedirectJob::REDIRECT_307_TEMPORARY_REDIRECT,
++          "EagleEye-TrackingParamStrip");
+     }

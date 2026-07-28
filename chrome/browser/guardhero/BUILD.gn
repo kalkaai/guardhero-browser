@@ -1,0 +1,196 @@
+# Copyright (c) 2025 Guard Hero. All rights reserved.
+# Use of this source code is governed by a BSD-style license.
+#
+# BUILD.gn — GN build rules for chrome/browser/guardhero/
+
+import("//build/config/features.gni")
+
+declare_args() {
+  # Enable Guard Hero Browser features
+  enable_guardhero = true
+  # Enable EagleEye native blocking engine
+  enable_eagleeye_native = true
+}
+
+if (enable_guardhero) {
+
+# ── URL constants ──────────────────────────────────────────────────────────────
+source_set("guardhero_url_constants") {
+  sources = [
+    "guardhero_url_constants.cc",
+    "guardhero_url_constants.h",
+  ]
+  deps = [ "//base" ]
+}
+
+# ── EagleEye interceptor ───────────────────────────────────────────────────────
+source_set("eagleeye_interceptor") {
+  sources = [
+    "eagleeye_interceptor.cc",
+    "eagleeye_interceptor.h",
+  ]
+  deps = [
+    ":guardhero_url_constants",
+    "//base",
+    "//chrome/common:constants",
+    "//net",
+    "//url",
+    "//eagleeye-native/blocker:blocker",
+  ]
+  if (enable_eagleeye_native) {
+    defines = [ "EAGLEEYE_NATIVE_ENABLED=1" ]
+  }
+}
+
+# ── Action button (toolbar shield) ────────────────────────────────────────────
+source_set("guardhero_action_button") {
+  sources = [
+    "guardhero_action_button.cc",
+    "guardhero_action_button.h",
+  ]
+  deps = [
+    ":guardhero_url_constants",
+    "//base",
+    "//chrome/browser/ui",
+    "//ui/base",
+    "//ui/gfx",
+    "//ui/views",
+  ]
+}
+
+# ── JS API bridge ─────────────────────────────────────────────────────────────
+source_set("guardhero_api_bridge") {
+  sources = [
+    "guardhero_api_message_handler.cc",
+    "guardhero_api_message_handler.h",
+  ]
+  deps = [
+    ":eagleeye_interceptor",
+    "//base",
+    "//chrome/browser/ui/webui",
+    "//content/public/browser",
+    "//eagleeye-native/bridge:bridge",
+  ]
+}
+
+# ── DevMode side panel ────────────────────────────────────────────────────────
+source_set("devmode_panel") {
+  sources = [
+    "devmode_panel.cc",
+    "devmode_panel.h",
+    "request_event_broadcaster.cc",
+    "request_event_broadcaster.h",
+  ]
+  deps = [
+    ":eagleeye_interceptor",
+    ":guardhero_url_constants",
+    "//base",
+    "//chrome/browser/ui",
+    "//chrome/browser/ui/views/side_panel",
+    "//content/public/browser",
+  ]
+}
+
+# ── Header modifier ───────────────────────────────────────────────────────────
+source_set("header_modifier") {
+  sources = [
+    "header_modifier.cc",
+    "header_modifier.h",
+  ]
+  deps = [
+    "//base",
+    "//extensions/browser",
+    "//net",
+    "//url",
+  ]
+}
+
+# ── DevMode local CA / cert manager ──────────────────────────────────────────
+source_set("dev_cert_manager") {
+  sources = [
+    "dev_cert_manager.cc",
+    "dev_cert_manager.h",
+  ]
+  deps = [
+    "//base",
+    "//base:i18n",
+    "//net",
+    "//net/cert",
+    "//third_party/boringssl",
+  ]
+}
+
+# ── Audit runner ──────────────────────────────────────────────────────────────
+source_set("audit_runner") {
+  sources = [
+    "audit_runner.cc",
+    "audit_runner.h",
+  ]
+  deps = [
+    ":eagleeye_interceptor",
+    ":request_event_broadcaster",
+    "//base",
+    "//content/public/browser",
+    "//url",
+  ]
+  # Resolve the broadcaster dep without circular reference
+  # (broadcaster is compiled as part of devmode_panel above).
+  public_deps = [ ":devmode_panel" ]
+}
+
+# ── All guardhero targets (convenience group) ──────────────────────────────────
+group("guardhero") {
+  public_deps = [
+    ":audit_runner",
+    ":dev_cert_manager",
+    ":devmode_panel",
+    ":eagleeye_interceptor",
+    ":guardhero_action_button",
+    ":guardhero_api_bridge",
+    ":guardhero_url_constants",
+    ":header_modifier",
+  ]
+}
+
+}  # if (enable_guardhero)
+
+# ── EagleEye native blocker (eagleeye-native/blocker/) ────────────────────────
+if (enable_eagleeye_native) {
+
+source_set("eagleeye_blocker") {
+  sources = [
+    "//eagleeye-native/blocker/blocklist_manager.cc",
+    "//eagleeye-native/blocker/blocklist_manager.h",
+    "//eagleeye-native/blocker/cname_resolver.cc",
+    "//eagleeye-native/blocker/cname_resolver.h",
+    "//eagleeye-native/blocker/domain_matcher.cc",
+    "//eagleeye-native/blocker/domain_matcher.h",
+    "//eagleeye-native/blocker/request_interceptor.cc",
+    "//eagleeye-native/blocker/request_interceptor.h",
+    "//eagleeye-native/blocker/url_analyzer.cc",
+    "//eagleeye-native/blocker/url_analyzer.h",
+  ]
+  deps = [ "//base" ]
+  configs += [ "//build/config/compiler:no_exceptions" ]
+}
+
+}  # if (enable_eagleeye_native)
+
+# ── Unit tests ────────────────────────────────────────────────────────────────
+if (enable_guardhero) {
+
+source_set("guardhero_unit_tests") {
+  testonly = true
+  sources = [
+    "domain_matcher_unittest.cc",
+    "url_analyzer_unittest.cc",
+    "request_interceptor_unittest.cc",
+  ]
+  deps = [
+    ":eagleeye_blocker",
+    "//base",
+    "//testing/gtest",
+  ]
+}
+
+}  # if (enable_guardhero)

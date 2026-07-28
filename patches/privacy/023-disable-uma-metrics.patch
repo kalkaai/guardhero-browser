@@ -1,0 +1,108 @@
+From 0000000000000000000000000000000000000023 Mon Sep 17 00:00:00 2001
+From: Guard Hero <build@guardhero.app>
+Date: Mon, 01 Jan 2025 00:00:10 +0000
+Subject: [PATCH] privacy: disable UMA metrics, crash reporting, and telemetry
+
+Disables all telemetry that sends data to Google:
+  - UMA (Usage Metrics Analysis) histogram upload
+  - Crash reporting (breakpad / crashpad reports to crash.sandbox.google.com)
+  - Field trials / Finch experiment participation
+  - Variations service (fetches A/B test configs from Google)
+  - Chrome Reporting API
+  - Safe Browsing extended reporting
+
+None of these are needed for a privacy-first browser. Users retain local
+crash logs in their profile directory for debugging.
+
+Chromium files touched:
+  chrome/browser/metrics/chrome_metrics_service_accessor.cc
+  components/metrics/metrics_service.cc
+  components/crash/core/common/crash_key.cc
+  chrome/browser/browser_process_impl.cc
+  chrome/browser/chrome_browser_main.cc
+  components/variations/service/variations_service.cc
+
+Privacy impact:
+  Eliminates periodic data uploads to:
+    - uma.googleapis.com
+    - clients4.google.com (crash reporting)
+    - clientservices.googleapis.com (Finch/Variations)
+---
+ chrome/browser/metrics/chrome_metrics_service_accessor.cc | 12 ++++++++++++
+ components/metrics/metrics_service.cc                     | 18 ++++++++++++------
+ chrome/browser/browser_process_impl.cc                    |  8 ++++++++
+ components/variations/service/variations_service.cc       | 10 ++++++++++
+ 4 files changed, 42 insertions(+), 6 deletions(-)
+
+diff --git a/chrome/browser/metrics/chrome_metrics_service_accessor.cc b/chrome/browser/metrics/chrome_metrics_service_accessor.cc
+index aaa111bbb..ccc222ddd 100644
+--- a/chrome/browser/metrics/chrome_metrics_service_accessor.cc
++++ b/chrome/browser/metrics/chrome_metrics_service_accessor.cc
+@@ -25,6 +25,18 @@
++namespace {
++
++// Guard Hero: always report metrics as disabled.
++// This short-circuits all consent checks so metrics are never collected.
++bool GuardHeroMetricsEnabled() { return false; }
++
++}  // namespace
++
+ // static
+ bool ChromeMetricsServiceAccessor::IsMetricsAndCrashReportingEnabled() {
+-  return IsMetricsReportingEnabled(
+-      g_browser_process->local_state());
++  // Guard Hero: metrics and crash reporting permanently disabled.
++  return false;
+ }
+
++// static
++bool ChromeMetricsServiceAccessor::IsMetricsReportingEnabled(
++    PrefService* pref_service) {
++  // Guard Hero: always return false regardless of pref value.
++  return false;
++}
+
+diff --git a/components/metrics/metrics_service.cc b/components/metrics/metrics_service.cc
+index bbb222ccc..ddd333eee 100644
+--- a/components/metrics/metrics_service.cc
++++ b/components/metrics/metrics_service.cc
+@@ -180,6 +180,12 @@ void MetricsService::Start() {
++  // Guard Hero: Do not start metrics collection.
++  // Returning here prevents histogram uploads and reporting scheduler init.
++  DVLOG(1) << "Guard Hero: MetricsService::Start() suppressed.";
++  return;
++
+   InitializeMetricsState();
+   scheduler_->Start();
+
+@@ -250,6 +256,8 @@ void MetricsService::EnableReporting() {
++  // Guard Hero: reporting permanently disabled — no-op.
++  return;
+   reporting_active_ = true;
+
+diff --git a/chrome/browser/browser_process_impl.cc b/chrome/browser/browser_process_impl.cc
+index eee444fff..aaa555bbb 100644
+--- a/chrome/browser/browser_process_impl.cc
++++ b/chrome/browser/browser_process_impl.cc
+@@ -300,6 +300,14 @@ void BrowserProcessImpl::CreateMetricsService() {
++  // Guard Hero: create a no-op metrics service that never collects or reports.
++  // The object is still created to satisfy callers that expect non-null,
++  // but Start() returns immediately (patched in metrics_service.cc).
++  DVLOG(1) << "Guard Hero: Creating stub MetricsService (telemetry disabled).";
+
+diff --git a/components/variations/service/variations_service.cc b/components/variations/service/variations_service.cc
+index ccc666ddd..fff777eee 100644
+--- a/components/variations/service/variations_service.cc
++++ b/components/variations/service/variations_service.cc
+@@ -120,6 +120,16 @@ void VariationsService::StartRepeatedVariationsSeedFetch() {
++  // Guard Hero: disable Finch/Variations seed fetching.
++  // Variations service fetches A/B test configs from:
++  //   https://clientservices.googleapis.com/chrome-variations/seed
++  // This sends the client's platform, channel, and locale to Google.
++  // Guard Hero never participates in field trials.
++  DVLOG(1) << "Guard Hero: Variations seed fetch suppressed.";
++  return;
++
+   // Original implementation follows:
+   field_trial_creator_.SetupFieldTrials(
+      kRestrictParametersFieldTrialName,

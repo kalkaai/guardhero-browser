@@ -1,0 +1,23 @@
+# macOS
+.DS_Store
+
+# Node dependencies
+node_modules/
+package-lock.json
+
+# Chromium source tree (managed by gclient, not committed)
+src/
+
+# Chromium build/depot tools
+.depot_tools/
+.cipd/
+.cpp-test-build/
+
+# gclient generated state files
+.gclient-sync.log
+.gclient_entries
+.gclient_previous_sync_commits
+.gcs_entries
+
+# Bad SCM temp directory
+_bad_scm/

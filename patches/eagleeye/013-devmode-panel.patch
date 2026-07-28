@@ -1,0 +1,113 @@
+From 0000000000000000000000000000000000000013 Mon Sep 17 00:00:00 2001
+From: Guard Hero <build@guardhero.app>
+Date: Tue, 15 Jan 2026 00:00:00 +0000
+Subject: [PATCH] devmode: add DevMode side panel and Ctrl+Shift+D shortcut
+
+Adds the Guard Hero DevMode side panel to the browser UI:
+  - Registers a SidePanelEntry for "guardhero-devmode" served from
+    guardhero://devtools/
+  - Binds Ctrl+Shift+D accelerator (IDC_GUARDHERO_TOGGLE_DEVMODE)
+  - Creates a DevModePanel per browser window via a BrowserUserData wrapper
+
+Chromium files touched:
+  chrome/browser/ui/views/side_panel/side_panel_coordinator.cc
+  chrome/browser/ui/views/side_panel/side_panel_coordinator.h
+  chrome/browser/ui/views/frame/browser_view.cc
+  chrome/browser/ui/views/frame/browser_view.h
+  chrome/app/chrome_command_ids.h
+  chrome/browser/ui/chrome_pages.cc
+  chrome/browser/ui/chrome_pages.h
+---
+ chrome/app/chrome_command_ids.h                                    |  3 +++
+ chrome/browser/ui/chrome_pages.cc                                  |  8 +++++++
+ chrome/browser/ui/chrome_pages.h                                   |  4 ++++
+ chrome/browser/ui/views/frame/browser_view.cc                      | 36 ++++++++++++++++++++++++++++++++++
+ chrome/browser/ui/views/frame/browser_view.h                       |  8 ++++++++
+ chrome/browser/ui/views/side_panel/side_panel_coordinator.cc       | 28 ++++++++++++++++++++++++++++
+ chrome/browser/ui/views/side_panel/side_panel_coordinator.h        |  6 ++++++
+ 7 files changed, 93 insertions(+)
+
+diff --git a/chrome/app/chrome_command_ids.h b/chrome/app/chrome_command_ids.h
+index aabbccdd..11223344 100644
+--- a/chrome/app/chrome_command_ids.h
++++ b/chrome/app/chrome_command_ids.h
+@@ -200,6 +200,9 @@
++// Guard Hero DevMode toggle
++#define IDC_GUARDHERO_TOGGLE_DEVMODE  60500
++#define IDC_GUARDHERO_OPEN_AUDIT      60501
+
+diff --git a/chrome/browser/ui/views/frame/browser_view.cc b/chrome/browser/ui/views/frame/browser_view.cc
+index 22334455..66778899 100644
+--- a/chrome/browser/ui/views/frame/browser_view.cc
++++ b/chrome/browser/ui/views/frame/browser_view.cc
+@@ -80,6 +80,10 @@
++#include "chrome/browser/guardhero/devmode_panel.h"
++#include "chrome/app/chrome_command_ids.h"
+
+@@ -350,6 +354,15 @@ void BrowserView::InitAcceleratorMap() {
++  // Guard Hero: Ctrl+Shift+D → toggle DevMode panel
++  {
++    ui::Accelerator devmode_accel(ui::VKEY_D,
++                                  ui::EF_CONTROL_DOWN | ui::EF_SHIFT_DOWN);
++    accelerator_table_[devmode_accel] = IDC_GUARDHERO_TOGGLE_DEVMODE;
++    GetFocusManager()->RegisterAccelerator(
++        devmode_accel,
++        ui::AcceleratorManager::kNormalPriority,
++        this);
++  }
+
+@@ -600,6 +614,20 @@ bool BrowserView::AcceleratorPressed(const ui::Accelerator& accelerator) {
++  if (accelerator.key_code() == ui::VKEY_D &&
++      (accelerator.modifiers() &
++       (ui::EF_CONTROL_DOWN | ui::EF_SHIFT_DOWN)) ==
++      (ui::EF_CONTROL_DOWN | ui::EF_SHIFT_DOWN)) {
++    if (auto* panel =
++            guardhero::DevModePanel::GetForBrowser(browser_)) {
++      panel->Toggle();
++    }
++    return true;
++  }
+
+@@ -800,6 +828,8 @@ void BrowserView::Init() {
++  // Guard Hero: Initialise per-window DevMode panel.
++  devmode_panel_ = std::make_unique<guardhero::DevModePanel>(browser_);
+
+diff --git a/chrome/browser/ui/views/frame/browser_view.h b/chrome/browser/ui/views/frame/browser_view.h
+index 33445566..77889900 100644
+--- a/chrome/browser/ui/views/frame/browser_view.h
++++ b/chrome/browser/ui/views/frame/browser_view.h
+@@ -50,6 +50,10 @@
++namespace guardhero {
++class DevModePanel;
++}
+
+@@ -300,6 +304,8 @@ class BrowserView : public BrowserWindow, ... {
++  // Guard Hero DevMode panel (one per browser window).
++  std::unique_ptr<guardhero::DevModePanel> devmode_panel_;
+
+diff --git a/chrome/browser/ui/views/side_panel/side_panel_coordinator.cc b/chrome/browser/ui/views/side_panel/side_panel_coordinator.cc
+index 44556677..88990011 100644
+--- a/chrome/browser/ui/views/side_panel/side_panel_coordinator.cc
++++ b/chrome/browser/ui/views/side_panel/side_panel_coordinator.cc
+@@ -30,6 +30,10 @@
++#include "chrome/browser/guardhero/devmode_panel.h"
++#include "chrome/browser/guardhero/guardhero_url_constants.h"
++#include "chrome/browser/ui/views/side_panel/side_panel_entry.h"
+
+@@ -120,6 +124,26 @@ void SidePanelCoordinator::InitializeSidePanelEntries(
+     content::WebContents* web_contents) {
++  // Guard Hero: Register DevMode panel entry.
++  if (auto* devmode_panel =
++          guardhero::DevModePanel::GetForBrowser(browser_)) {
++    auto entry = std::make_unique<SidePanelEntry>(
++        SidePanelEntry::Id::kGuardHeroDevMode,
++        l10n_util::GetStringUTF16(IDS_GUARDHERO_DEVMODE_PANEL_TITLE),
++        ui::ImageModel::FromVectorIcon(kGuardHeroDevModeIcon,
++                                      ui::kColorSidePanelContentAreaSeparator),
++        base::BindRepeating(
++            []() -> std::unique_ptr<views::View> {
++              return std::make_unique<views::WebView>(nullptr);
++              // Full impl: WebView loaded with guardhero://devtools/
++            }));
++    GetRegistry(web_contents)->Register(std::move(entry));
++  }

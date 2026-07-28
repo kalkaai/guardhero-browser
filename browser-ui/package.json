@@ -1,0 +1,40 @@
+{
+  "name": "guardhero-browser-ui",
+  "version": "1.0.0",
+  "description": "Guard Hero Browser — New Tab Page, Popup, and Settings UI",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --open /index.html",
+    "dev:newtab": "vite --open /newtab/index.html",
+    "dev:popup": "vite --open /popup/index.html",
+    "dev:settings": "vite --open /settings/index.html",
+    "dev:devtools": "vite --open /devtools/index.html",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "lint": "eslint . --ext .ts,.tsx",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.45.0",
+    "@testing-library/react": "^16.0.0",
+    "@testing-library/user-event": "^14.5.2",
+    "@types/chrome": "^0.0.268",
+    "@types/node": "^25.7.0",
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0",
+    "@vitejs/plugin-react": "^4.3.1",
+    "eslint": "^9.8.0",
+    "typescript": "^5.5.4",
+    "vite": "^5.4.0",
+    "vitest": "^2.0.5"
+  }
+}

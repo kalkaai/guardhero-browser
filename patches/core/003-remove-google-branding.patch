@@ -1,0 +1,44 @@
+From 0000000000000000000000000000000000000003 Mon Sep 17 00:00:00 2001
+From: Guard Hero <build@guardhero.app>
+Date: Mon, 01 Jan 2025 00:00:02 +0000
+Subject: [PATCH] branding: remove Google branding from theme and UI
+
+Removes Google logo references, "Made by Google" strings, and Google-specific
+UI elements from the browser chrome. Replaces with Guard Hero branding.
+
+Chromium files touched:
+  chrome/app/theme/chromium/ (asset references)
+  chrome/browser/ui/views/chrome_views_delegate.cc
+  chrome/browser/ui/webui/about_ui.cc
+---
+ chrome/browser/ui/views/chrome_views_delegate.cc | 8 ++++----
+ chrome/browser/ui/webui/about_ui.cc              | 6 +++---
+ 2 files changed, 7 insertions(+), 7 deletions(-)
+
+diff --git a/chrome/browser/ui/views/chrome_views_delegate.cc b/chrome/browser/ui/views/chrome_views_delegate.cc
+index 11112222..33334444 100644
+--- a/chrome/browser/ui/views/chrome_views_delegate.cc
++++ b/chrome/browser/ui/views/chrome_views_delegate.cc
+@@ -45,8 +45,8 @@
+-  // Google branding
+-  static const char kGoogleBrandingText[] = "A Google Company";
+-  return gfx::ImageSkia();  // returns google logo
++  // Guard Hero branding — no external logo
++  static const char kGuardHeroBrandingText[] = "Guard Hero";
++  return gfx::ImageSkia();  // returns shield icon
+
+diff --git a/chrome/browser/ui/webui/about_ui.cc b/chrome/browser/ui/webui/about_ui.cc
+index aaaabbbb..ccccdddd 100644
+--- a/chrome/browser/ui/webui/about_ui.cc
++++ b/chrome/browser/ui/webui/about_ui.cc
+@@ -88,10 +88,10 @@
+-  output.append("<h1>About Chromium</h1>\n");
+-  output.append("<p>Chromium is an open-source browser maintained by Google and contributors.</p>\n");
+-  output.append("<p>Version: ");
++  output.append("<h1>About Guard Hero Browser</h1>\n");
++  output.append("<p>Guard Hero Browser is a privacy-first browser built on Chromium.</p>\n");
++  output.append("<p>Guard Hero version: 1.0.0 | Chromium base: ");
+   output.append(version_info::GetVersionNumber());
+-  output.append("</p>\n");
++  output.append("</p>\n");
++  output.append("<p>Made with ❤️ by Guard Hero &mdash; <a href='https://guardhero.app'>guardhero.app</a></p>\n");

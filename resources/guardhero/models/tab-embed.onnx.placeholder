@@ -1,0 +1,11 @@
+# PLACEHOLDER — Real model file bundled at build time
+# 
+# To add the actual model:
+#   python3 scripts/download_models.py
+#
+# Or manually:
+#   wget -O resources/guardhero/models/tab-embed.onnx \
+#     https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/onnx/model.onnx
+#
+# Verify SHA-256 against models.json after download.
+# Update models.json sha256 field with the actual hash.

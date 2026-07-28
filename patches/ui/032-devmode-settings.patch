@@ -1,0 +1,130 @@
+From 0000000000000000000000000000000000000032 Mon Sep 17 00:00:00 2001
+From: Guard Hero <build@guardhero.app>
+Date: Tue, 15 Jan 2026 00:00:01 +0000
+Subject: [PATCH] ui: add guardhero://settings#developer route
+
+Adds the "Developer" section to the Guard Hero settings page, accessible
+via guardhero://settings#developer.  The section is rendered by the
+DeveloperSettings React component (browser-ui/settings/sections/DeveloperSettings.tsx).
+
+Chromium files touched:
+  chrome/browser/guardhero/guardhero_url_constants.cc
+  chrome/browser/guardhero/guardhero_url_constants.h
+  chrome/browser/ui/webui/guardhero_settings_ui.cc
+  chrome/browser/ui/webui/guardhero_settings_ui.h
+---
+ chrome/browser/guardhero/guardhero_url_constants.cc    |  4 ++++
+ chrome/browser/guardhero/guardhero_url_constants.h     |  3 +++
+ chrome/browser/ui/webui/guardhero_settings_ui.cc       | 22 ++++++++++++++++++++++
+ chrome/browser/ui/webui/guardhero_settings_ui.h        |  5 +++++
+ 4 files changed, 34 insertions(+)
+
+diff --git a/chrome/browser/guardhero/guardhero_url_constants.cc b/chrome/browser/guardhero/guardhero_url_constants.cc
+index 11223344..aabbccdd 100644
+--- a/chrome/browser/guardhero/guardhero_url_constants.cc
++++ b/chrome/browser/guardhero/guardhero_url_constants.cc
+@@ -20,6 +20,10 @@
+ const char kGuardHeroSettingsURL[]       = "guardhero://settings/";
+ const char kGuardHeroNewTabURL[]         = "guardhero://newtab/";
+ const char kGuardHeroStatsURL[]          = "guardhero://stats/";
++
++// v1.1 additions
++const char kGuardHeroDevToolsURL[]       = "guardhero://devtools/";
++const char kGuardHeroAuditURL[]          = "guardhero://audit/";
++const char kGuardHeroSettingsDeveloper[] = "guardhero://settings/#developer";
+
+diff --git a/chrome/browser/guardhero/guardhero_url_constants.h b/chrome/browser/guardhero/guardhero_url_constants.h
+index 22334455..bbccddee 100644
+--- a/chrome/browser/guardhero/guardhero_url_constants.h
++++ b/chrome/browser/guardhero/guardhero_url_constants.h
+@@ -15,6 +15,9 @@
+ extern const char kGuardHeroSettingsURL[];
+ extern const char kGuardHeroNewTabURL[];
+ extern const char kGuardHeroStatsURL[];
++extern const char kGuardHeroDevToolsURL[];
++extern const char kGuardHeroAuditURL[];
++extern const char kGuardHeroSettingsDeveloper[];
+
+diff --git a/chrome/browser/ui/webui/guardhero_settings_ui.cc b/chrome/browser/ui/webui/guardhero_settings_ui.cc
+index 33445566..ccddeeff 100644
+--- a/chrome/browser/ui/webui/guardhero_settings_ui.cc
++++ b/chrome/browser/ui/webui/guardhero_settings_ui.cc
+@@ -60,6 +60,28 @@ GuardHeroSettingsUI::GuardHeroSettingsUI(content::WebUI* web_ui)
+     : content::WebUIController(web_ui) {
++
++  // Register the developer settings sub-route.
++  // The React settings app reads window.location.hash and activates the
++  // "developer" section when the hash is "#developer".
++  //
++  // This patch ensures the guardhero://settings/#developer URL is:
++  //   1. Recognised by the WebUI handler (no 404).
++  //   2. Passed through to the React app as a hash fragment.
++  //   3. Linked from the settings sidebar nav item added in DeveloperSettings.tsx.
++
++  content::WebUIDataSource* source =
++      content::WebUIDataSource::CreateAndAdd(
++          web_ui->GetWebContents()->GetBrowserContext(),
++          guardhero::kGuardHeroSettingsDomain);
++
++  // Allow the "developer" hash to load the same settings bundle.
++  source->SetDefaultResource(IDR_GUARDHERO_SETTINGS_HTML);
++  source->AddResourcePath("", IDR_GUARDHERO_SETTINGS_HTML);
++  source->AddResourcePath("#developer", IDR_GUARDHERO_SETTINGS_HTML);
++
++  // Register the DevMode JS API handlers used by DeveloperSettings.tsx.
++  web_ui->AddMessageHandler(
++      std::make_unique<GuardHeroDeveloperSettingsHandler>());
++}
++
++// GuardHeroDeveloperSettingsHandler handles chrome.guardhero.devCerts.*
++// calls from the LocalHttpsManager React component.
++void GuardHeroDeveloperSettingsHandler::RegisterMessages() {
++  web_ui()->RegisterMessageCallback(
++      "devCerts.getCA",
++      base::BindRepeating(
++          &GuardHeroDeveloperSettingsHandler::HandleGetCA,
++          base::Unretained(this)));
++  web_ui()->RegisterMessageCallback(
++      "devCerts.generateCA",
++      base::BindRepeating(
++          &GuardHeroDeveloperSettingsHandler::HandleGenerateCA,
++          base::Unretained(this)));
++  web_ui()->RegisterMessageCallback(
++      "devCerts.listCerts",
++      base::BindRepeating(
++          &GuardHeroDeveloperSettingsHandler::HandleListCerts,
++          base::Unretained(this)));
++  web_ui()->RegisterMessageCallback(
++      "devCerts.issueCert",
++      base::BindRepeating(
++          &GuardHeroDeveloperSettingsHandler::HandleIssueCert,
++          base::Unretained(this)));
++  web_ui()->RegisterMessageCallback(
++      "devCerts.revokeCert",
++      base::BindRepeating(
++          &GuardHeroDeveloperSettingsHandler::HandleRevokeCert,
++          base::Unretained(this)));
++  web_ui()->RegisterMessageCallback(
++      "devCerts.exportCA",
++      base::BindRepeating(
++          &GuardHeroDeveloperSettingsHandler::HandleExportCA,
++          base::Unretained(this)));
++}
+
+diff --git a/chrome/browser/ui/webui/guardhero_settings_ui.h b/chrome/browser/ui/webui/guardhero_settings_ui.h
+index 44556677..ddeeff00 100644
+--- a/chrome/browser/ui/webui/guardhero_settings_ui.h
++++ b/chrome/browser/ui/webui/guardhero_settings_ui.h
+@@ -30,6 +30,11 @@
++// Handles chrome.guardhero.devCerts.* messages from DeveloperSettings React UI.
++class GuardHeroDeveloperSettingsHandler : public content::WebUIMessageHandler {
++ public:
++  void RegisterMessages() override;
++ private:
++  void HandleGetCA(const base::Value::List& args);
++  void HandleGenerateCA(const base::Value::List& args);
++  void HandleListCerts(const base::Value::List& args);
++  void HandleIssueCert(const base::Value::List& args);
++  void HandleRevokeCert(const base::Value::List& args);
++  void HandleExportCA(const base::Value::List& args);
++};

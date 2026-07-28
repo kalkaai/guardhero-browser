@@ -1,0 +1,292 @@
+/* Guard Hero Browser — New Tab Page Styles */
+@import './tokens.css';
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body, #root {
+  height: 100%;
+  width: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+  font-size: var(--text-base);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Layout ───────────────────────────────────────────────────────────── */
+.ntp-root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-8) var(--space-4);
+  gap: var(--space-8);
+  background: radial-gradient(
+    ellipse 80% 60% at 50% 20%,
+    rgba(0, 212, 255, 0.04) 0%,
+    transparent 70%
+  ), var(--bg);
+}
+
+/* ── Header (logo + clock) ─────────────────────────────────────────────── */
+.ntp-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  max-width: 680px;
+}
+
+.ntp-logo {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  text-decoration: none;
+}
+
+.ntp-logo-icon {
+  width: 36px;
+  height: 36px;
+  background: var(--accent);
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  box-shadow: var(--shadow-accent);
+}
+
+.ntp-logo-text {
+  font-size: var(--text-sm);
+  font-weight: var(--font-semibold);
+  color: var(--text-muted);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+/* ── Clock ─────────────────────────────────────────────────────────────── */
+.ntp-clock {
+  text-align: right;
+}
+
+.ntp-clock-time {
+  font-size: var(--text-xl);
+  font-weight: var(--font-semibold);
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+
+.ntp-clock-date {
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+/* ── Search Bar ─────────────────────────────────────────────────────────── */
+.ntp-search-container {
+  width: 100%;
+  max-width: 560px;
+  position: relative;
+}
+
+.ntp-search-form {
+  display: flex;
+  align-items: center;
+}
+
+.ntp-search-input {
+  width: 100%;
+  padding: var(--space-4) var(--space-6) var(--space-4) 48px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+  color: var(--text);
+  font-family: var(--font-sans);
+  font-size: var(--text-base);
+  outline: none;
+  transition: border-color var(--transition-base), box-shadow var(--transition-base);
+}
+
+.ntp-search-input::placeholder {
+  color: var(--text-faint);
+}
+
+.ntp-search-input:focus {
+  border-color: var(--border-focus);
+  box-shadow: 0 0 0 3px var(--accent-glow);
+}
+
+.ntp-search-icon {
+  position: absolute;
+  left: 16px;
+  color: var(--text-muted);
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+}
+
+/* ── Stats Panel ─────────────────────────────────────────────────────────── */
+.ntp-stats-panel {
+  width: 100%;
+  max-width: 600px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  padding: var(--space-5) var(--space-6);
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-4);
+}
+
+.ntp-stat {
+  text-align: center;
+}
+
+.ntp-stat-label {
+  font-size: var(--text-xs);
+  font-weight: var(--font-semibold);
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: var(--space-1);
+}
+
+.ntp-stat-value {
+  font-size: var(--text-3xl);
+  font-weight: var(--font-bold);
+  color: var(--blocked);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.03em;
+  transition: all var(--transition-base);
+}
+
+.ntp-stat-value.is-zero {
+  color: var(--text-muted);
+}
+
+.ntp-stat-divider {
+  width: 1px;
+  background: var(--border);
+  align-self: stretch;
+}
+
+/* ── Top Sites ─────────────────────────────────────────────────────────── */
+.ntp-top-sites {
+  width: 100%;
+  max-width: 560px;
+}
+
+.ntp-top-sites-grid {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: var(--space-3);
+}
+
+.ntp-site-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  text-decoration: none;
+  padding: var(--space-3);
+  border-radius: var(--radius-lg);
+  transition: background var(--transition-fast);
+  cursor: pointer;
+}
+
+.ntp-site-item:hover {
+  background: var(--bg-elevated);
+}
+
+.ntp-site-favicon {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-elevated);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.ntp-site-favicon img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.ntp-site-title {
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 60px;
+}
+
+/* ── Quick Links ───────────────────────────────────────────────────────── */
+.ntp-quick-links {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.ntp-quick-link {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+  color: var(--text-muted);
+  text-decoration: none;
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+  transition: all var(--transition-base);
+}
+
+.ntp-quick-link:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  box-shadow: var(--shadow-accent);
+}
+
+.ntp-quick-link-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+/* ── Number counter animation ──────────────────────────────────────────── */
+@keyframes countUp {
+  from { transform: translateY(8px); opacity: 0; }
+  to   { transform: translateY(0);   opacity: 1; }
+}
+
+.ntp-stat-value.animating {
+  animation: countUp 0.3s ease forwards;
+}
+
+/* ── Responsive ─────────────────────────────────────────────────────────── */
+@media (max-width: 600px) {
+  .ntp-top-sites-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+  .ntp-stats-panel {
+    grid-template-columns: 1fr;
+    gap: var(--space-3);
+  }
+  .ntp-quick-links {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+}

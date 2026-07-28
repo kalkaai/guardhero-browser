@@ -1,0 +1,56 @@
+From 0000000000000000000000000000000000000021 Mon Sep 17 00:00:00 2001
+From: Guard Hero <build@guardhero.app>
+Date: Mon, 01 Jan 2025 00:00:05 +0000
+Subject: [PATCH] privacy: add subtle noise to canvas readback (anti-fingerprinting)
+
+Adds ±1 noise to canvas pixel values on readback (toDataURL, getImageData).
+Noise is deterministic per-session using a seeded PRNG so the same canvas
+renders consistently within a session but differs between sessions.
+
+This approach matches Brave's canvas noise implementation.
+
+Chromium files touched:
+  third_party/blink/renderer/core/html/canvas/html_canvas_element.cc
+  third_party/blink/renderer/core/html/canvas/canvas_rendering_context_2d.cc
+---
+ third_party/blink/renderer/core/html/canvas/html_canvas_element.cc | 28 ++++++++++++
+ 1 file changed, 28 insertions(+)
+
+diff --git a/third_party/blink/renderer/core/html/canvas/html_canvas_element.cc b/third_party/blink/renderer/core/html/canvas/html_canvas_element.cc
+index aaa111bbb..ccc222ddd 100644
+--- a/third_party/blink/renderer/core/html/canvas/html_canvas_element.cc
++++ b/third_party/blink/renderer/core/html/canvas/html_canvas_element.cc
+@@ -5,6 +5,14 @@
++#include "chrome/browser/guardhero/canvas_noise_params.h"
++
++namespace {
++
++// Guard Hero: Add per-session noise to canvas pixel readback.
++// Noise magnitude: ±1 per channel. Seeded from session token so
++// fingerprints vary between sessions but are stable within a session.
++void ApplyGuardHeroCanvasNoise(uint8_t* pixels, size_t length,
++                                uint64_t session_seed) {
++  // Simple xorshift64 PRNG seeded per-session
++  uint64_t state = session_seed;
++  for (size_t i = 0; i < length; i += 4) {
++    // Skip alpha channel (i+3), only noise RGB
++    state ^= state << 13;
++    state ^= state >> 7;
++    state ^= state << 17;
++    int8_t noise_r = (state & 0x3) - 1;  // -1, 0, or 1
++    state ^= state << 13; state ^= state >> 7; state ^= state << 17;
++    int8_t noise_g = (state & 0x3) - 1;
++    state ^= state << 13; state ^= state >> 7; state ^= state << 17;
++    int8_t noise_b = (state & 0x3) - 1;
++    if (i + 2 < length) {
++      pixels[i]   = static_cast<uint8_t>(
++          std::clamp(static_cast<int>(pixels[i])   + noise_r, 0, 255));
++      pixels[i+1] = static_cast<uint8_t>(
++          std::clamp(static_cast<int>(pixels[i+1]) + noise_g, 0, 255));
++      pixels[i+2] = static_cast<uint8_t>(
++          std::clamp(static_cast<int>(pixels[i+2]) + noise_b, 0, 255));
++    }
++  }
++}
++
++}  // namespace

@@ -1,0 +1,32 @@
+From 0000000000000000000000000000000000000012 Mon Sep 17 00:00:00 2001
+From: Guard Hero <build@guardhero.app>
+Date: Mon, 01 Jan 2025 00:00:09 +0000
+Subject: [PATCH] ui: add Guard Hero shield toolbar button
+
+Adds the Guard Hero shield action button to the browser toolbar,
+right of the omnibox. Button shows:
+  - Green shield: blocking active
+  - Grey shield: site allowlisted / blocking paused
+  - Red shield + count: active trackers detected (pulsing)
+
+Chromium files touched:
+  chrome/browser/ui/views/toolbar/toolbar_view.cc
+  chrome/browser/ui/views/toolbar/toolbar_view.h
+---
+ chrome/browser/ui/views/toolbar/toolbar_view.cc | 24 ++++++++++++++++++++++
+ chrome/browser/ui/views/toolbar/toolbar_view.h  |  6 ++++++
+ 2 files changed, 30 insertions(+)
+
+diff --git a/chrome/browser/ui/views/toolbar/toolbar_view.cc b/chrome/browser/ui/views/toolbar/toolbar_view.cc
+index 11223344..55667788 100644
+--- a/chrome/browser/ui/views/toolbar/toolbar_view.cc
++++ b/chrome/browser/ui/views/toolbar/toolbar_view.cc
+@@ -100,6 +100,10 @@
++#include "chrome/browser/guardhero/guardhero_action_button.h"
++
+@@ -200,6 +204,20 @@ void ToolbarView::Init() {
++  // Guard Hero: Add shield button to toolbar (right of omnibox)
++  guardhero_action_button_ =
++      AddChildView(std::make_unique<guardhero::GuardHeroActionButton>(browser_));
++  guardhero_action_button_->SetAccessibleName(
++      u"Guard Hero — Click to view blocking status");

@@ -1,0 +1,40 @@
+From 0000000000000000000000000000000000000020 Mon Sep 17 00:00:00 2001
+From: Guard Hero <build@guardhero.app>
+Date: Mon, 01 Jan 2025 00:00:04 +0000
+Subject: [PATCH] privacy: disable Safe Browsing service and UI
+
+Removes Safe Browsing UI elements and disables the service entirely.
+Safe Browsing sends visited URLs to Google, which violates our privacy promise.
+We rely on EagleEye's local blocking for malware/tracker protection instead.
+
+Chromium files touched:
+  chrome/browser/safe_browsing/chrome_safe_browsing_blocking_page.cc
+  chrome/browser/ui/views/safe_browsing/
+  components/safe_browsing/core/common/safe_browsing_prefs.cc
+  chrome/browser/prefs/browser_prefs.cc
+---
+ chrome/browser/prefs/browser_prefs.cc | 8 ++++++++
+ components/safe_browsing/core/common/safe_browsing_prefs.cc | 12 ++++--------
+ 2 files changed, 12 insertions(+), 8 deletions(-)
+
+diff --git a/components/safe_browsing/core/common/safe_browsing_prefs.cc b/components/safe_browsing/core/common/safe_browsing_prefs.cc
+index 55667788..99aabbcc 100644
+--- a/components/safe_browsing/core/common/safe_browsing_prefs.cc
++++ b/components/safe_browsing/core/common/safe_browsing_prefs.cc
+@@ -30,12 +30,16 @@ void RegisterProfilePrefs(PrefRegistrySimple* registry) {
++  // Guard Hero: force-disable Safe Browsing (sends URLs to Google)
+   registry->RegisterBooleanPref(
+       prefs::kSafeBrowsingEnabled,
+-      true);
++      false);  // Guard Hero: disabled
++
+   registry->RegisterBooleanPref(
+       prefs::kSafeBrowsingEnhanced,
+-      false);
++      false);  // Guard Hero: always disabled
++
++  // Guard Hero: disable Safe Browsing reporting
+   registry->RegisterBooleanPref(
+       prefs::kSafeBrowsingExtendedReportingEnabled,
+-      false);
++      false);  // Guard Hero: always disabled

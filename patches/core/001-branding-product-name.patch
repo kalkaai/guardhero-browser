@@ -1,0 +1,64 @@
+From 0000000000000000000000000000000000000001 Mon Sep 17 00:00:00 2001
+From: Guard Hero <build@guardhero.app>
+Date: Mon, 01 Jan 2025 00:00:00 +0000
+Subject: [PATCH] branding: rename product to Guard Hero Browser
+
+Changes IDS_PRODUCT_NAME to "Guard Hero Browser" and
+IDS_SHORT_PRODUCT_NAME to "Guard Hero" in chromium_strings.grd.
+Also updates chrome_strings.grd fallback references.
+
+Chromium files touched:
+  chrome/app/chromium_strings.grd
+  chrome/app/generated_resources.grd
+---
+ chrome/app/chromium_strings.grd    | 12 ++++++------
+ chrome/app/generated_resources.grd |  4 ++--
+ 2 files changed, 8 insertions(+), 8 deletions(-)
+
+diff --git a/chrome/app/chromium_strings.grd b/chrome/app/chromium_strings.grd
+index aabbcc1..ddeeff2 100644
+--- a/chrome/app/chromium_strings.grd
++++ b/chrome/app/chromium_strings.grd
+@@ -20,16 +20,16 @@
+       <message name="IDS_PRODUCT_NAME" desc="The name of the product.">
+-        Chromium
++        Guard Hero Browser
+       </message>
+       <message name="IDS_SHORT_PRODUCT_NAME" desc="A short version of the name of the product.">
+-        Chromium
++        Guard Hero
+       </message>
+       <message name="IDS_PRODUCT_DESCRIPTION" desc="The description of the product.">
+-        Chromium is an open-source browser project that aims to build a safer, faster, and more stable way for all Internet users to experience the web.
++        Guard Hero Browser is a privacy-first browser that fights back against trackers, ads, and surveillance. Built on Chromium.
+       </message>
+       <message name="IDS_PRODUCT_PUBLISHER" desc="The publisher of the product.">
+-        The Chromium Authors
++        Guard Hero
+       </message>
+       <message name="IDS_BROWSER_WINDOW_TITLE_FORMAT" desc="The format for the browser window title.">
+-        <ph name="TITLE">$1<ex>Google</ex></ph> - Chromium
++        <ph name="TITLE">$1<ex>Guard Hero</ex></ph> - Guard Hero Browser
+       </message>
+       <message name="IDS_TASK_MANAGER_TITLE" desc="Title of the task manager window.">
+-        Chromium Task Manager
++        Guard Hero Task Manager
+       </message>
+       <message name="IDS_ABOUT_PRODUCT_TITLE" desc="Title of the About dialog.">
+-        About Chromium
++        About Guard Hero Browser
+       </message>
+
+diff --git a/chrome/app/generated_resources.grd b/chrome/app/generated_resources.grd
+index 1122334..5566778 100644
+--- a/chrome/app/generated_resources.grd
++++ b/chrome/app/generated_resources.grd
+@@ -100,8 +100,8 @@
+       <message name="IDS_NEW_TAB_TITLE" desc="The title of the new tab page.">
+-        New Tab - Chromium
++        New Tab - Guard Hero Browser
+       </message>
+       <message name="IDS_CRASHED_TAB_TITLE" desc="Title of a tab that has crashed.">
+-        Aw, Snap! - Chromium
++        Aw, Snap! - Guard Hero Browser
+       </message>

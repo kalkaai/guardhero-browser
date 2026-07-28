@@ -1,0 +1,18 @@
+From 0000000000000000000000000000000000000034 Mon Sep 17 00:00:00 2001
+From: Guard Hero <build@guardhero.app>
+Date: Mon, 01 Jan 2025 00:00:042 +0000
+Subject: [PATCH] ai: reader-mode-bridge integration
+
+Placeholder patch for 042-reader-mode-bridge.
+See browser-ui/ and chrome/browser/guardhero/ for implementation.
+---
+ chrome/browser/guardhero/ai_placeholder.h | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/chrome/browser/guardhero/ai_placeholder.h b/chrome/browser/guardhero/ai_placeholder.h
+new file mode 100644
+index 000000000..111111111
+--- /dev/null
++++ b/chrome/browser/guardhero/ai_placeholder.h
+@@ -0,0 +1 @@
++// Guard Hero AI tools — 042-reader-mode-bridge

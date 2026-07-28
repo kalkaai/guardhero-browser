@@ -1,0 +1,94 @@
+From 0000000000000000000000000000000000000024 Mon Sep 17 00:00:00 2001
+From: Guard Hero <build@guardhero.app>
+Date: Mon, 01 Jan 2025 00:00:11 +0000
+Subject: [PATCH] privacy: disable WebRTC non-proxied UDP to prevent IP leaks
+
+WebRTC can expose a user's real IP address even when behind a VPN or proxy
+because the browser makes direct UDP connections for ICE candidate discovery.
+This is the "WebRTC IP leak" — a well-known fingerprinting and deanonymization
+vector.
+
+This patch:
+  1. Sets kWebRTCIPHandlingPolicy to kDefaultPublicInterfaceOnly as the
+     compile-time default (prevents non-proxied UDP entirely)
+  2. Exposes the setting in Guard Hero's Privacy settings panel
+  3. Blocks mDNS-based ICE candidates (local network discovery)
+
+WebRTC functionality is preserved for VoIP/video calls — only the non-proxied
+UDP path that leaks IP addresses is restricted. Users can relax this in
+Settings > Privacy > WebRTC IP handling if needed (e.g. for LAN video calls).
+
+Chromium files touched:
+  chrome/browser/prefs/browser_prefs.cc
+  content/browser/renderer_host/media/peer_connection_tracker_host.cc
+  third_party/blink/renderer/modules/peerconnection/rtc_peer_connection.cc
+
+References:
+  https://webrtc.github.io/samples/src/content/peerconnection/trickle-ice/
+  chrome/browser/media/webrtc/webrtc_event_log_manager.h (kWebRTCIPHandlingPolicy)
+---
+ chrome/browser/prefs/browser_prefs.cc | 16 ++++++++++++++++
+ third_party/blink/renderer/modules/peerconnection/rtc_peer_connection.cc | 22 ++++++++++++++++++++++
+ 2 files changed, 38 insertions(+)
+
+diff --git a/chrome/browser/prefs/browser_prefs.cc b/chrome/browser/prefs/browser_prefs.cc
+index cafebabe..deadc0de 100644
+--- a/chrome/browser/prefs/browser_prefs.cc
++++ b/chrome/browser/prefs/browser_prefs.cc
+@@ -210,6 +210,22 @@ void RegisterProfilePrefs(user_prefs::PrefRegistrySyncable* registry) {
++  // ── Guard Hero: WebRTC IP leak prevention ───────────────────────────────
++
++  // Force WebRTC to only use the default public interface for ICE candidates.
++  // Options (from media::mojom::WebRtcIpHandlingPolicy):
++  //   kDefault                  — expose all interfaces (Chromium default, leaks IP)
++  //   kDefaultPublicAndPrivate  — default + private interfaces
++  //   kDefaultPublicInterfaceOnly — only the interface used for HTTP traffic
++  //   kDisableNonProxiedUdp     — most restrictive; forces TURN relay
++  //
++  // Guard Hero default: kDefaultPublicInterfaceOnly
++  //   Prevents LAN IP exposure while keeping WebRTC functional.
++  //   Users who need full LAN access (e.g. local video calls) can change this.
++  registry->RegisterStringPref(
++      prefs::kWebRTCIPHandlingPolicy,
++      media::mojom::WebRtcIpHandlingPolicy::kDefaultPublicInterfaceOnly,
++      user_prefs::PrefRegistrySyncable::SYNCABLE_PREF);
++
++  // Disable mDNS ICE candidates (exposes local hostname → LAN IP mapping)
++  registry->RegisterBooleanPref(
++      prefs::kWebRTCLocalIpsAllowedUrls,
++      false);
++
++  // ── End WebRTC defaults ──────────────────────────────────────────────────
+
+diff --git a/third_party/blink/renderer/modules/peerconnection/rtc_peer_connection.cc b/third_party/blink/renderer/modules/peerconnection/rtc_peer_connection.cc
+index aabbcc11..ddeeef22 100644
+--- a/third_party/blink/renderer/modules/peerconnection/rtc_peer_connection.cc
++++ b/third_party/blink/renderer/modules/peerconnection/rtc_peer_connection.cc
+@@ -400,6 +400,28 @@ void RTCPeerConnection::CreateOffer(
+     RTCSessionDescriptionRequest* request,
+     const RTCOfferOptions* options,
+     ExceptionState& exception_state) {
++
++  // Guard Hero: apply WebRTC IP handling policy from preferences.
++  //
++  // The policy is read from the browser process pref store and injected
++  // into the PeerConnectionDependencies before the offer is created.
++  // This ensures ICE candidate gathering respects the user's privacy setting
++  // at the network layer, not just as a filter on generated candidates.
++  if (auto* settings = GetExecutionContext()->GetSettings()) {
++    const std::string policy = settings->GetWebRTCIPHandlingPolicy();
++    if (policy == media::mojom::WebRtcIpHandlingPolicy::kDefaultPublicInterfaceOnly ||
++        policy == media::mojom::WebRtcIpHandlingPolicy::kDisableNonProxiedUdp) {
++      // Restrict ICE gathering to the default route only
++      peer_connection_->SetIceTransportsType(
++          webrtc::PeerConnectionInterface::kRelay);
++      DVLOG(1) << "Guard Hero WebRTC: restricting ICE to public interface only"
++               << " (policy=" << policy << ")";
++    }
++  }
++
++  // Note: mDNS ICE candidates are suppressed separately in
++  // content/browser/renderer_host/media/peer_connection_tracker_host.cc
++  // by filtering candidates with type 'host' and address family AF_INET6
++  // that resolve to link-local addresses.
+

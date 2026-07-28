@@ -1,0 +1,29 @@
+From 0000000000000000000000000000000000000031 Mon Sep 17 00:00:00 2001
+From: Guard Hero <build@guardhero.app>
+Date: Mon, 01 Jan 2025 00:00:11 +0000
+Subject: [PATCH] ui: add guardhero://settings WebUI route
+
+Registers guardhero://settings as a WebUI page served from the bundled
+React settings assets.
+
+Chromium files touched:
+  chrome/browser/ui/webui/chrome_web_ui_controller_factory.cc
+---
+ chrome/browser/ui/webui/chrome_web_ui_controller_factory.cc | 8 ++++++++
+ 1 file changed, 8 insertions(+)
+
+diff --git a/chrome/browser/ui/webui/chrome_web_ui_controller_factory.cc b/chrome/browser/ui/webui/chrome_web_ui_controller_factory.cc
+index ffff666..aaaa777 100644
+--- a/chrome/browser/ui/webui/chrome_web_ui_controller_factory.cc
++++ b/chrome/browser/ui/webui/chrome_web_ui_controller_factory.cc
+@@ -300,6 +300,14 @@ WebUIFactoryFunction GetWebUIFactoryFunction(WebUI* web_ui,
++  // Guard Hero Settings page
++  if (url.SchemeIs(chrome::kGuardHeroScheme) &&
++      url.host() == chrome::kGuardHeroSettingsHost) {
++    return &NewWebUI<guardhero::GuardHeroSettingsUI>;
++  }
++  // Guard Hero New Tab Page
++  if (url.SchemeIs(chrome::kGuardHeroScheme) &&
++      url.host() == chrome::kGuardHeroNewTabHost) {
++    return &NewWebUI<guardhero::GuardHeroNewTabUI>;
++  }

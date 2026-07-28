@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" fill="none">
+  <!-- Guard Hero Browser — Shield Icon -->
+  <!-- Design: dark shield with cyan gradient fill and GH monogram -->
+
+  <!-- Outer shield -->
+  <path d="M64 8 L108 28 L108 68 C108 92 88 112 64 120 C40 112 20 92 20 68 L20 28 Z"
+        fill="url(#shield-gradient)"
+        stroke="#00D4FF"
+        stroke-width="2.5"
+        stroke-linejoin="round"/>
+
+  <!-- Inner shield highlight -->
+  <path d="M64 18 L98 34 L98 68 C98 87 83 104 64 111 C45 104 30 87 30 68 L30 34 Z"
+        fill="url(#inner-gradient)"
+        opacity="0.4"/>
+
+  <!-- GH Monogram — G -->
+  <text x="32" y="84"
+        font-family="'Arial Black', 'Helvetica Neue', Arial, sans-serif"
+        font-size="42"
+        font-weight="900"
+        fill="#FFFFFF"
+        letter-spacing="-2">GH</text>
+
+  <!-- Cyan accent bar at bottom of shield -->
+  <rect x="44" y="96" width="40" height="3" rx="1.5" fill="#00D4FF" opacity="0.8"/>
+
+  <!-- Definitions -->
+  <defs>
+    <linearGradient id="shield-gradient" x1="64" y1="8" x2="64" y2="120" gradientUnits="userSpaceOnUse">
+      <stop offset="0%"   stop-color="#0F1F3D"/>
+      <stop offset="100%" stop-color="#0A0E1A"/>
+    </linearGradient>
+    <linearGradient id="inner-gradient" x1="64" y1="18" x2="64" y2="111" gradientUnits="userSpaceOnUse">
+      <stop offset="0%"   stop-color="#00D4FF" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#00D4FF" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+</svg>

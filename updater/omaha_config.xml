@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Guard Hero Browser — Omaha Update Server Configuration
+  Endpoint: https://updates.guardhero.app/omaha
+
+  This file configures the self-hosted Omaha-compatible update server.
+  The server responds to update check requests from Guard Hero Browser
+  and the Guard Hero Updater service.
+
+  Omaha protocol: v3.0
+  Reference: https://github.com/google/omaha/blob/master/doc/ServerProtocol.md
+-->
+<omaha-server>
+  <!-- ── Server identity ─────────────────────────────────────────────────── -->
+  <server>
+    <id>guardhero-update-server</id>
+    <version>1.0</version>
+    <endpoint>https://updates.guardhero.app/omaha</endpoint>
+    <fallback-endpoint>https://updates-backup.guardhero.app/omaha</fallback-endpoint>
+  </server>
+
+  <!-- ── Applications managed by this server ─────────────────────────────── -->
+  <applications>
+
+    <!-- Guard Hero Browser — main browser application -->
+    <application>
+      <appid>{GUARDHERO-BROWSER-1A2B-3C4D-5E6F-7A8B9C0D1E2F}</appid>
+      <name>Guard Hero Browser</name>
+      <channel>stable</channel>
+      <current-version>1.0.0</current-version>
+
+      <!-- Platforms -->
+      <platforms>
+        <platform os="win" arch="x64">
+          <installer-url>https://releases.guardhero.app/browser/win64/</installer-url>
+          <installer-filename>GuardHeroBrowser-Setup-{VERSION}-x64.exe</installer-filename>
+        </platform>
+        <platform os="mac" arch="arm64">
+          <installer-url>https://releases.guardhero.app/browser/macos-arm64/</installer-url>
+          <installer-filename>GuardHeroBrowser-{VERSION}-arm64.dmg</installer-filename>
+        </platform>
+        <platform os="mac" arch="x64">
+          <installer-url>https://releases.guardhero.app/browser/macos-x64/</installer-url>
+          <installer-filename>GuardHeroBrowser-{VERSION}-x64.dmg</installer-filename>
+        </platform>
+        <platform os="linux" arch="x64">
+          <installer-url>https://releases.guardhero.app/browser/linux-x64/</installer-url>
+          <installer-filename>guardhero-browser_{VERSION}_amd64.deb</installer-filename>
+        </platform>
+      </platforms>
+
+      <!-- Update cadence -->
+      <update-policy>
+        <!-- Security releases: within 48h of Chromium stable -->
+        <security-update-max-delay-hours>48</security-update-max-delay-hours>
+        <!-- Feature releases: monthly -->
+        <feature-release-cadence>monthly</feature-release-cadence>
+        <!-- Check interval -->
+        <check-interval-hours>6</check-interval-hours>
+        <!-- Rollout: 5% → 25% → 100% over 3 days for stability -->
+        <rollout-strategy>gradual</rollout-strategy>
+        <rollout-stages>
+          <stage percent="5"   delay-hours="0" />
+          <stage percent="25"  delay-hours="24" />
+          <stage percent="100" delay-hours="72" />
+        </rollout-stages>
+      </update-policy>
+    </application>
+
+    <!-- Guard Hero Blocklist — lightweight update, no restart needed -->
+    <application>
+      <appid>{GUARDHERO-BLOCKLIST-2B3C-4D5E-6F7A-8B9C0D1E2F3A}</appid>
+      <name>Guard Hero EagleEye Blocklist</name>
+      <channel>stable</channel>
+
+      <update-policy>
+        <!-- Blocklists update every 6 hours via background service -->
+        <check-interval-hours>6</check-interval-hours>
+        <requires-browser-restart>false</requires-browser-restart>
+        <!-- Deliver via delta update (only changed domains) -->
+        <delta-updates>true</delta-updates>
+      </update-policy>
+
+      <platforms>
+        <platform os="all">
+          <update-url>https://releases.guardhero.app/blocklists/</update-url>
+        </platform>
+      </platforms>
+    </application>
+
+  </applications>
+
+  <!-- ── Analytics configuration (privacy-preserving) ────────────────────── -->
+  <analytics>
+    <!-- No individual-level data. Only aggregate counts. -->
+    <track-installs>true</track-installs>
+    <track-updates>true</track-updates>
+    <track-crashes>false</track-crashes>  <!-- Never -->
+    <track-usage>false</track-usage>      <!-- Never -->
+    <!-- All analytics are server-side (count of update requests by version) -->
+    <!-- No unique identifiers, no IP logging, no user-level data -->
+    <retention-days>30</retention-days>
+  </analytics>
+
+</omaha-server>

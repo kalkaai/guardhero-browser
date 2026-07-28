@@ -1,0 +1,132 @@
+name: Blocklist Update
+
+on:
+  schedule:
+    # Every 6 hours
+    - cron: "0 */6 * * *"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Dry run — fetch but do not commit"
+        required: false
+        default: "false"
+
+jobs:
+  update-blocklists:
+    name: Fetch & Commit Updated Blocklists
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GH_BLOCKLIST_TOKEN || github.token }}
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install requests --break-system-packages 2>/dev/null || pip install requests
+
+      - name: Fetch updated blocklists
+        id: fetch
+        run: |
+          python3 - << 'PYEOF'
+          import hashlib
+          import os
+          import sys
+          import urllib.request
+          from pathlib import Path
+
+          LISTS_DIR = Path("eagleeye-native/lists")
+          SOURCES = {
+              "blocklist.txt": [
+                  # EasyList (tracker subset only — filtered server-side)
+                  "https://easylist.to/easylist/easylist.txt",
+                  # EasyPrivacy
+                  "https://easylist.to/easylist/easyprivacy.txt",
+              ],
+              "video-ads.txt": [
+                  # Twitch/YouTube ad domains maintained by Guard Hero
+                  # Primary source is the repo's own maintained list
+              ],
+          }
+
+          def fetch_url(url: str) -> bytes | None:
+              try:
+                  req = urllib.request.Request(url, headers={"User-Agent": "GuardHeroBlocklistFetcher/1.0"})
+                  with urllib.request.urlopen(req, timeout=30) as resp:
+                      return resp.read()
+              except Exception as e:
+                  print(f"  WARN: Failed to fetch {url}: {e}", file=sys.stderr)
+                  return None
+
+          changed = False
+          for list_name, urls in SOURCES.items():
+              if not urls:
+                  continue
+              target = LISTS_DIR / list_name
+              lines = set()
+              for url in urls:
+                  print(f"Fetching {url}")
+                  data = fetch_url(url)
+                  if data:
+                      for line in data.decode("utf-8", errors="ignore").splitlines():
+                          line = line.strip()
+                          # Extract domain-only lines from ABP format
+                          if line and not line.startswith(("!", "[", "#", "@")):
+                              # Simple domain pattern
+                              if line.startswith("||") and line.endswith("^"):
+                                  domain = line[2:-1]
+                                  if domain and "." in domain and "/" not in domain:
+                                      lines.add(domain)
+              if lines:
+                  new_content = "\n".join(sorted(lines)) + "\n"
+                  old_hash = hashlib.sha256(target.read_bytes()).hexdigest() if target.exists() else ""
+                  new_hash = hashlib.sha256(new_content.encode()).hexdigest()
+                  if old_hash != new_hash:
+                      print(f"Updated {list_name}: {len(lines)} domains")
+                      target.write_text(new_content)
+                      changed = True
+                  else:
+                      print(f"No changes to {list_name}")
+
+          with open(os.environ["GITHUB_OUTPUT"], "a") as f:
+              f.write(f"changed={'true' if changed else 'false'}\n")
+          PYEOF
+
+      - name: Commit changes
+        if: steps.fetch.outputs.changed == 'true' && github.event.inputs.dry_run != 'true'
+        run: |
+          git config user.name "Guard Hero Blocklist Bot"
+          git config user.email "blocklist-bot@guardhero.app"
+          git add eagleeye-native/lists/
+          git commit -m "chore: auto-update blocklists [skip ci]
+
+          Updated by blocklist-update workflow at $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          git push
+
+      - name: No changes
+        if: steps.fetch.outputs.changed == 'false'
+        run: echo "Blocklists are already up to date."
+
+      - name: Notify on failure
+        if: failure()
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        run: |
+          python3 -c "
+          import json, os, urllib.request
+          webhook = os.environ.get('SLACK_WEBHOOK_URL')
+          if not webhook:
+              exit(0)
+          msg = {'text': '⚠️ Guard Hero blocklist update workflow failed. Check GitHub Actions.'}
+          req = urllib.request.Request(webhook, json.dumps(msg).encode(), {'Content-Type': 'application/json'})
+          urllib.request.urlopen(req, timeout=10)
+          "

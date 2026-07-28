@@ -1,0 +1,69 @@
+From 0000000000000000000000000000000000000010 Mon Sep 17 00:00:00 2001
+From: Guard Hero <build@guardhero.app>
+Date: Mon, 01 Jan 2025 00:00:07 +0000
+Subject: [PATCH] eagleeye: add EagleEyeInterceptor class declaration
+
+Adds EagleEyeInterceptor class to chrome/browser/guardhero/.
+This is the main Chromium integration point for the EagleEye native
+blocking engine. Implements net::URLRequestInterceptor.
+
+Chromium files touched:
+  chrome/browser/guardhero/eagleeye_interceptor.h (new)
+  chrome/browser/guardhero/eagleeye_interceptor.cc (new)
+  chrome/browser/guardhero/BUILD.gn (new)
+---
+ chrome/browser/guardhero/eagleeye_interceptor.h  | 52 ++++++++++++++++++++++
+ chrome/browser/guardhero/eagleeye_interceptor.cc | 68 ++++++++++++++++++++++++++++
+ 2 files changed, 120 insertions(+)
+ create mode 100644 chrome/browser/guardhero/eagleeye_interceptor.h
+ create mode 100644 chrome/browser/guardhero/eagleeye_interceptor.cc
+
+diff --git a/chrome/browser/guardhero/eagleeye_interceptor.h b/chrome/browser/guardhero/eagleeye_interceptor.h
+new file mode 100644
+index 000000000..aabbccdd1
+--- /dev/null
++++ b/chrome/browser/guardhero/eagleeye_interceptor.h
+@@ -0,0 +1,52 @@
++// Copyright (c) 2025 Guard Hero. All rights reserved.
++// Use of this source code is governed by a BSD-style license.
++
++#ifndef CHROME_BROWSER_GUARDHERO_EAGLEEYE_INTERCEPTOR_H_
++#define CHROME_BROWSER_GUARDHERO_EAGLEEYE_INTERCEPTOR_H_
++
++#include <memory>
++#include "net/url_request/url_request_interceptor.h"
++#include "eagleeye-native/blocker/request_interceptor.h"
++
++namespace guardhero {
++
++// EagleEyeInterceptor — hooks into Chromium's network stack to block
++// and modify requests based on the EagleEye native blocking engine.
++//
++// Registration: called from chrome/browser/io_thread.cc during
++// network service initialization.
++class EagleEyeInterceptor : public net::URLRequestInterceptor {
++ public:
++  EagleEyeInterceptor();
++  ~EagleEyeInterceptor() override;
++
++  // net::URLRequestInterceptor implementation
++  net::URLRequestJob* MaybeInterceptRequest(
++      net::URLRequest* request,
++      net::NetworkDelegate* network_delegate) const override;
++
++  // Statistics
++  int64_t GetSessionBlockCount() const;
++  int64_t GetAllTimeBlockCount() const;
++  void ResetSessionStats();
++
++ private:
++  std::unique_ptr<eagleeye::RequestInterceptor> native_interceptor_;
++  mutable int64_t session_block_count_ = 0;
++
++  EagleEyeInterceptor(const EagleEyeInterceptor&) = delete;
++  EagleEyeInterceptor& operator=(const EagleEyeInterceptor&) = delete;
++};
++
++}  // namespace guardhero
++
++#endif  // CHROME_BROWSER_GUARDHERO_EAGLEEYE_INTERCEPTOR_H_

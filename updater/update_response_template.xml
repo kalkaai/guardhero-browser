@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Guard Hero Browser — Omaha Update Response Template
+  Protocol version: 3.0
+
+  This is the response format served by https://updates.guardhero.app/omaha
+  to Guard Hero Browser clients that check for updates.
+
+  Variables replaced at serve time:
+    {VERSION}        — e.g., "1.2.0.0"
+    {HASH_SHA256}    — SHA-256 of the installer file
+    {FILE_SIZE}      — Installer file size in bytes
+    {FILENAME}       — Platform-specific installer filename
+    {CODEBASE_URL}   — Base URL for installer download
+    {STATUS}         — "ok" | "noupdate" | "error"
+    {APP_ID}         — Application GUID
+
+  Reference:
+    https://github.com/google/omaha/blob/master/doc/ServerProtocol.md
+-->
+
+<!-- ── Update available ─────────────────────────────────────────────────── -->
+<response protocol="3.0"
+          server="guardhero-update-server"
+          elapsed_seconds="1">
+
+  <daystart elapsed_seconds="43200"/>
+
+  <app appid="{APP_ID}"
+       status="ok">
+
+    <updatecheck status="{STATUS}">
+      <urls>
+        <url codebase="{CODEBASE_URL}"/>
+        <!-- Fallback CDN mirror -->
+        <url codebase="https://cdn.guardhero.app/releases/browser/"/>
+      </urls>
+
+      <manifest version="{VERSION}">
+        <packages>
+          <package name="{FILENAME}"
+                   hash_sha256="{HASH_SHA256}"
+                   size="{FILE_SIZE}"
+                   required="true"/>
+        </packages>
+
+        <actions>
+          <!-- Pre-install action: close running browser instances -->
+          <action event="preinstall"
+                  run="{FILENAME}"
+                  arguments="--pre-install-close"
+                  successurl="guardhero://settings#update-success"
+                  terminateallbrowsers="true"
+                  onsuccess="exitsilentlyonlaunchcmd"/>
+
+          <!-- Install action: run the installer silently -->
+          <action event="install"
+                  run="{FILENAME}"
+                  arguments="/S"
+                  successurl="guardhero://settings#update-success"
+                  onsuccess="exitsilentlyonlaunchcmd"/>
+
+          <!-- Post-install: launch new version -->
+          <action event="postinstall"
+                  run="guardhero.exe"
+                  successurl="guardhero://settings#update-success"
+                  onsuccess="exitsilentlyonlaunchcmd"/>
+        </actions>
+      </manifest>
+
+    </updatecheck>
+
+    <!-- Ping acknowledgement -->
+    <ping status="ok"/>
+
+  </app>
+
+</response>
+
+<!-- ── No update available ─────────────────────────────────────────────── -->
+<!--
+<response protocol="3.0">
+  <daystart elapsed_seconds="43200"/>
+  <app appid="{APP_ID}" status="ok">
+    <updatecheck status="noupdate"/>
+    <ping status="ok"/>
+  </app>
+</response>
+-->
+
+<!-- ── Error response ──────────────────────────────────────────────────── -->
+<!--
+<response protocol="3.0">
+  <daystart elapsed_seconds="0"/>
+  <app appid="{APP_ID}" status="error-unknownApplication">
+    <updatecheck status="error-unknownApplication"/>
+  </app>
+</response>
+-->
+
+<!-- ── Blocklist update response ──────────────────────────────────────── -->
+<!--
+  For the lightweight blocklist update (no browser restart):
+  The file is a gzip-compressed text file with one domain per line.
+  Hot-reload is handled by BlocklistManager::Reload() in the browser.
+-->
+<!--
+<response protocol="3.0">
+  <daystart elapsed_seconds="43200"/>
+  <app appid="{BLOCKLIST_APP_ID}" status="ok">
+    <updatecheck status="ok">
+      <urls>
+        <url codebase="https://releases.guardhero.app/blocklists/"/>
+      </urls>
+      <manifest version="{BLOCKLIST_VERSION}">
+        <packages>
+          <package name="blocklist-{BLOCKLIST_VERSION}.txt.gz"
+                   hash_sha256="{HASH}"
+                   size="{SIZE}"
+                   required="true"/>
+        </packages>
+        <actions>
+          <action event="install"
+                  run=""
+                  successurl=""
+                  onsuccess="exitsilentlyonlaunchcmd"/>
+        </actions>
+      </manifest>
+    </updatecheck>
+  </app>
+</response>
+-->

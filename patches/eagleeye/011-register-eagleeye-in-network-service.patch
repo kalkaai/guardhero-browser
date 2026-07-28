@@ -1,0 +1,42 @@
+From 0000000000000000000000000000000000000011 Mon Sep 17 00:00:00 2001
+From: Guard Hero <build@guardhero.app>
+Date: Mon, 01 Jan 2025 00:00:08 +0000
+Subject: [PATCH] eagleeye: register EagleEyeInterceptor in IOThread
+
+Registers the EagleEyeInterceptor during IOThread initialization so it
+is called for every network request.
+
+Chromium files touched:
+  chrome/browser/io_thread.cc
+  chrome/browser/io_thread.h
+---
+ chrome/browser/io_thread.cc | 20 ++++++++++++++++++++
+ chrome/browser/io_thread.h  |  6 ++++++
+ 2 files changed, 26 insertions(+)
+
+diff --git a/chrome/browser/io_thread.cc b/chrome/browser/io_thread.cc
+index 99887766..aabbccdd 100644
+--- a/chrome/browser/io_thread.cc
++++ b/chrome/browser/io_thread.cc
+@@ -50,6 +50,10 @@
++#include "chrome/browser/guardhero/eagleeye_interceptor.h"
++
+ namespace {
++
++// Guard Hero: Singleton EagleEye interceptor instance
++guardhero::EagleEyeInterceptor* g_eagleeye_interceptor = nullptr;
++
+ }  // namespace
+
+@@ -200,6 +204,16 @@ void IOThread::Init() {
++  // Guard Hero: Initialize and register EagleEye native blocking engine
++  if (!g_eagleeye_interceptor) {
++    g_eagleeye_interceptor = new guardhero::EagleEyeInterceptor();
++    net::URLRequestFilter::GetInstance()->AddHostnameInterceptor(
++        "http",  "*",
++        std::unique_ptr<net::URLRequestInterceptor>(g_eagleeye_interceptor));
++    net::URLRequestFilter::GetInstance()->AddHostnameInterceptor(
++        "https", "*",
++        std::unique_ptr<net::URLRequestInterceptor>(g_eagleeye_interceptor));
++    VLOG(1) << "Guard Hero: EagleEye interceptor registered";
++  }

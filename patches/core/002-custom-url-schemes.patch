@@ -1,0 +1,101 @@
+From 0000000000000000000000000000000000000002 Mon Sep 17 00:00:00 2001
+From: Guard Hero <build@guardhero.app>
+Date: Mon, 01 Jan 2025 00:00:01 +0000
+Subject: [PATCH] url: add guardhero:// custom URL scheme
+
+Registers the 'guardhero' URL scheme and routes:
+  guardhero://newtab     → Guard Hero New Tab Page
+  guardhero://settings   → Guard Hero Settings
+  guardhero://stats      → Guard Hero Stats page
+  guardhero://audit      → Tracker Audit Report
+  guardhero://ai-sessions → AI Session Manager
+  guardhero://prompts    → Prompt Library
+
+Chromium files touched:
+  chrome/common/url_constants.h
+  chrome/common/url_constants.cc
+  chrome/browser/ui/webui/chrome_web_ui_controller_factory.cc
+---
+ chrome/common/url_constants.h                          | 18 ++++++++
+ chrome/common/url_constants.cc                         | 14 ++++++
+ chrome/browser/ui/webui/chrome_web_ui_controller_factory.cc | 20 ++++++++++
+ 3 files changed, 52 insertions(+)
+
+diff --git a/chrome/common/url_constants.h b/chrome/common/url_constants.h
+index aaaa111..bbbb222 100644
+--- a/chrome/common/url_constants.h
++++ b/chrome/common/url_constants.h
+@@ -50,6 +50,24 @@ namespace chrome {
++// Guard Hero URL scheme and host constants
++extern const char kGuardHeroScheme[];
++extern const char kGuardHeroNewTabHost[];
++extern const char kGuardHeroSettingsHost[];
++extern const char kGuardHeroStatsHost[];
++extern const char kGuardHeroAuditHost[];
++extern const char kGuardHeroAiSessionsHost[];
++extern const char kGuardHeroPromptsHost[];
++extern const char kGuardHeroReaderHost[];
++
++// Full URL constants
++extern const char kGuardHeroNewTabURL[];
++extern const char kGuardHeroSettingsURL[];
++extern const char kGuardHeroStatsURL[];
++extern const char kGuardHeroAuditURL[];
++extern const char kGuardHeroAiSessionsURL[];
++extern const char kGuardHeroPromptsURL[];
++extern const char kGuardHeroReaderURL[];
+
+ }  // namespace chrome
+
+diff --git a/chrome/common/url_constants.cc b/chrome/common/url_constants.cc
+index cccc333..dddd444 100644
+--- a/chrome/common/url_constants.cc
++++ b/chrome/common/url_constants.cc
+@@ -30,6 +30,20 @@ namespace chrome {
+
++// Guard Hero scheme
++const char kGuardHeroScheme[]          = "guardhero";
++const char kGuardHeroNewTabHost[]      = "newtab";
++const char kGuardHeroSettingsHost[]    = "settings";
++const char kGuardHeroStatsHost[]       = "stats";
++const char kGuardHeroAuditHost[]       = "audit";
++const char kGuardHeroAiSessionsHost[]  = "ai-sessions";
++const char kGuardHeroPromptsHost[]     = "prompts";
++const char kGuardHeroReaderHost[]      = "reader";
++
++const char kGuardHeroNewTabURL[]       = "guardhero://newtab";
++const char kGuardHeroSettingsURL[]     = "guardhero://settings";
++const char kGuardHeroStatsURL[]        = "guardhero://stats";
++const char kGuardHeroAuditURL[]        = "guardhero://audit";
++const char kGuardHeroAiSessionsURL[]   = "guardhero://ai-sessions";
++const char kGuardHeroPromptsURL[]      = "guardhero://prompts";
++const char kGuardHeroReaderURL[]       = "guardhero://reader";
+
+ }  // namespace chrome
+
+diff --git a/chrome/browser/ui/webui/chrome_web_ui_controller_factory.cc b/chrome/browser/ui/webui/chrome_web_ui_controller_factory.cc
+index eeee555..ffff666 100644
+--- a/chrome/browser/ui/webui/chrome_web_ui_controller_factory.cc
++++ b/chrome/browser/ui/webui/chrome_web_ui_controller_factory.cc
+@@ -100,6 +100,26 @@ using content::WebUI;
++#include "chrome/browser/guardhero/guardhero_webui.h"
++
+ namespace {
++
++// Guard Hero WebUI registrations
++void RegisterGuardHeroWebUIs(content::WebUIControllerFactory* factory) {
++  // Register guardhero://newtab
++  factory->RegisterWebUIController(
++      chrome::kGuardHeroNewTabURL,
++      &NewWebUI<guardhero::GuardHeroNewTabUI>);
++  // Register guardhero://settings
++  factory->RegisterWebUIController(
++      chrome::kGuardHeroSettingsURL,
++      &NewWebUI<guardhero::GuardHeroSettingsUI>);
++  // Register guardhero://stats
++  factory->RegisterWebUIController(
++      chrome::kGuardHeroStatsURL,
++      &NewWebUI<guardhero::GuardHeroStatsUI>);
++}
++
+ }  // namespace

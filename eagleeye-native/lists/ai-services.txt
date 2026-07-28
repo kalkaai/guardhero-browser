@@ -1,0 +1,114 @@
+# EagleEye AI Services List v1.0
+# Guard Hero Browser — Privacy Shield for AI
+# Domains used by AI service interfaces and their known third-party dependencies
+# Format: domain  # service-name  category
+# Categories: analytics, telemetry, cdn, ads, fingerprinting, core-api
+
+# ── OpenAI / ChatGPT ──────────────────────────────────────────────────────────
+openai.com                   # OpenAI          core-api
+api.openai.com               # OpenAI          core-api
+chat.openai.com              # ChatGPT         core-api
+cdn.oaistatic.com            # OpenAI          cdn
+ab.chatgpt.com               # ChatGPT         analytics
+auth0.openai.com             # OpenAI          auth
+sentry.io                    # OpenAI          telemetry
+o0.ingest.sentry.io          # OpenAI          telemetry
+api2.amplitude.com           # ChatGPT         analytics
+cdn.amplitude.com            # ChatGPT         analytics
+statsigapi.net               # OpenAI          analytics
+
+# ── Anthropic / Claude ────────────────────────────────────────────────────────
+anthropic.com                # Anthropic       core-api
+api.anthropic.com            # Anthropic       core-api
+claude.ai                    # Claude          core-api
+statsig.anthropic.com        # Claude          analytics
+sentry.io                    # Claude          telemetry
+launchdarkly.com             # Anthropic       feature-flags
+app.launchdarkly.com         # Anthropic       feature-flags
+
+# ── Google Gemini ─────────────────────────────────────────────────────────────
+gemini.google.com            # Gemini          core-api
+generativelanguage.googleapis.com # Gemini   core-api
+bard.google.com              # Bard/Gemini     core-api
+accounts.google.com          # Google          auth
+ssl.gstatic.com              # Google          cdn
+fonts.googleapis.com         # Google          cdn (fingerprinting)
+fonts.gstatic.com            # Google          cdn (fingerprinting)
+google-analytics.com         # Gemini          analytics
+googletagmanager.com         # Gemini          analytics
+
+# ── Perplexity ────────────────────────────────────────────────────────────────
+perplexity.ai                # Perplexity      core-api
+api.perplexity.ai            # Perplexity      core-api
+cdn.perplexity.ai            # Perplexity      cdn
+sentry.io                    # Perplexity      telemetry
+api2.amplitude.com           # Perplexity      analytics
+
+# ── Cohere ────────────────────────────────────────────────────────────────────
+cohere.com                   # Cohere          core-api
+api.cohere.com               # Cohere          core-api
+dashboard.cohere.com         # Cohere          core-api
+sentry.io                    # Cohere          telemetry
+
+# ── Mistral AI ────────────────────────────────────────────────────────────────
+mistral.ai                   # Mistral         core-api
+api.mistral.ai               # Mistral         core-api
+console.mistral.ai           # Mistral         core-api
+sentry.io                    # Mistral         telemetry
+
+# ── Groq ──────────────────────────────────────────────────────────────────────
+groq.com                     # Groq            core-api
+api.groq.com                 # Groq            core-api
+console.groq.com             # Groq            core-api
+
+# ── Hugging Face ──────────────────────────────────────────────────────────────
+huggingface.co               # HuggingFace     core-api
+api-inference.huggingface.co # HuggingFace     core-api
+cdn-lfs.huggingface.co       # HuggingFace     cdn
+
+# ── GitHub Copilot / Azure OpenAI ─────────────────────────────────────────────
+copilot.github.com           # GitHub Copilot  core-api
+api.githubcopilot.com        # GitHub Copilot  core-api
+origin-tracker.githubusercontent.com # GitHub telemetry
+collector.github.com         # GitHub          telemetry
+alive.github.com             # GitHub          telemetry
+
+# ── Microsoft Copilot ─────────────────────────────────────────────────────────
+copilot.microsoft.com        # MS Copilot      core-api
+sydney.bing.com              # Bing AI         core-api
+edgeservices.bing.com        # Bing            analytics
+bat.bing.com                 # Bing            analytics
+
+# ── Local model runtimes (these should ALWAYS be allowed) ─────────────────────
+# Note: These entries are for documentation; local endpoints are auto-allowed.
+# localhost:11434             # Ollama          local
+# localhost:1234              # LM Studio       local
+# 127.0.0.1:8080             # llama.cpp       local
+
+# ── AI tool analytics third-parties ───────────────────────────────────────────
+amplitude.com                # Various AI tools analytics
+api2.amplitude.com           # Various AI tools analytics
+cdn.amplitude.com            # Various AI tools analytics
+segment.io                   # Various AI tools analytics
+analytics.segment.com        # Various AI tools analytics
+mixpanel.com                 # Various AI tools analytics
+heap.io                      # Various AI tools analytics
+hotjar.com                   # Various AI tools analytics
+fullstory.com                # Various AI tools analytics
+datadog-browser-agent.com    # Various AI tools telemetry
+rum.browser-intake-datadoghq.com # Various   telemetry
+ingest.sentry.io             # Various AI tools telemetry
+o0.ingest.sentry.io          # Various AI tools telemetry
+logrocket.io                 # Various AI tools session-recording
+lr-ingest.io                 # LogRocket       session-recording
+smartlook.com                # Various AI tools session-recording
+intercom.io                  # Various AI tools customer-support
+js.intercomcdn.com           # Intercom        customer-support
+widget.intercom.io           # Intercom        customer-support
+launchdarkly.com             # Various AI tools feature-flags
+app.launchdarkly.com         # Various AI tools feature-flags
+configcat.com                # Various AI tools feature-flags
+
+# ── AI safety and content moderation services ─────────────────────────────────
+moderation.openai.com        # OpenAI          moderation (allowed)
+trust.anthropic.com          # Anthropic       trust/safety

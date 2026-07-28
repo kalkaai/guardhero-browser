@@ -1,0 +1,28 @@
+From 0000000000000000000000000000000000000030 Mon Sep 17 00:00:00 2001
+From: Guard Hero <build@guardhero.app>
+Date: Mon, 01 Jan 2025 00:00:10 +0000
+Subject: [PATCH] ui: override New Tab Page URL to guardhero://newtab
+
+Replaces Chromium's default NTP (chrome://newtab) with the Guard Hero
+NTP (guardhero://newtab) which is served from the bundled React assets.
+
+Chromium files touched:
+  chrome/common/url_constants.cc
+  components/search_engines/template_url_service.cc
+---
+ chrome/common/url_constants.cc | 6 ++++--
+ 1 file changed, 4 insertions(+), 2 deletions(-)
+
+diff --git a/chrome/common/url_constants.cc b/chrome/common/url_constants.cc
+index dddd444..eeee555 100644
+--- a/chrome/common/url_constants.cc
++++ b/chrome/common/url_constants.cc
+@@ -15,7 +15,11 @@ namespace chrome {
+
+-const char kChromeUINewTabURL[]        = "chrome://newtab/";
++// Guard Hero: Override NTP with our custom page
++// chrome://newtab redirects to guardhero://newtab via WebUI controller
++const char kChromeUINewTabURL[]        = "guardhero://newtab";
++
++// Keep the original for reference (used in some tests)
++const char kChromeUINewTabURLOriginal[] = "chrome://newtab/";
