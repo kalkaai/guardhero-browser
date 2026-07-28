@@ -21,3 +21,4 @@ src/
 
 # Bad SCM temp directory
 _bad_scm/
+.ungoogled-chromium
